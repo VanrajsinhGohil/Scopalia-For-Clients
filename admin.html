@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scopalia for Client - Admin Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link.active {
+            background-color: #f1f5f9;
+            color: #0284c7;
+            font-weight: 600;
+        }
+        .dark .nav-link.active {
+            background-color: #1e293b;
+            color: #38bdf8;
+        }
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .view-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200" style="display: none;">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-20 hidden lg:hidden"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:static transition-colors">
+            <div class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700 justify-between">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-layer-group text-brand-600 dark:text-brand-500 text-xl mr-3"></i>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">Scopalia Admin</span>
+                </div>
+                <button id="sidebarClose" class="lg:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1" id="sidebarNav">
+                <a href="#dashboard" class="nav-link active flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-view="dashboard">
+                    <i class="fa-solid fa-chart-pie w-6"></i> Dashboard
+                </a>
+                <a href="#clients" class="nav-link flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-view="clients">
+                    <i class="fa-solid fa-users w-6"></i> Clients
+                </a>
+                <a href="#projects" class="nav-link flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-view="projects">
+                    <i class="fa-solid fa-briefcase w-6"></i> Projects
+                </a>
+                <a href="#videos" class="nav-link flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-view="videos">
+                    <i class="fa-solid fa-video w-6"></i> Video Delivery
+                </a>
+                <a href="#client-videos" class="nav-link flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-view="client-videos">
+                    <i class="fa-solid fa-cloud-arrow-up w-6"></i> Client Videos
+                </a>
+                <a href="#petrol" class="nav-link flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-view="petrol">
+                    <i class="fa-solid fa-gas-pump w-6"></i> Petrol Expenses
+                </a>
+                <a href="#payments" class="nav-link flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-view="payments">
+                    <i class="fa-solid fa-credit-card w-6"></i> Payments
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                <button id="logoutBtn" class="flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    <i class="fa-solid fa-sign-out-alt w-6"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden">
+            <!-- Header -->
+            <header class="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 z-10">
+                <div class="flex items-center">
+                    <button id="sidebarToggle" class="lg:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mr-4">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <h2 id="pageTitle" class="text-xl font-semibold text-gray-800 dark:text-white">Dashboard</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fa-regular fa-bell text-xl"></i>
+                    </button>
+                    <div class="h-8 w-8 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold">
+                        A
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable View Area -->
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900" id="mainContainer">
+                
+                <!-- View: Dashboard -->
+                <div id="view-dashboard" class="view-section active space-y-6">
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="kpiRevenue">₹0</p>
+                                </div>
+                                <div class="h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Net Profit</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="kpiProfit">₹0</p>
+                                </div>
+                                <div class="h-12 w-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Projects</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="kpiProjects">0</p>
+                                </div>
+                                <div class="h-12 w-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-briefcase"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Payments</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="kpiPending">₹0</p>
+                                </div>
+                                <div class="h-12 w-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Revenue Overview</h3>
+                            <canvas id="revenueChart" height="250"></canvas>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Expenses Breakdown</h3>
+                            <canvas id="expensesChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View: Clients -->
+                <div id="view-clients" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Client Management</h3>
+                        <button onclick="openModal('clientModal')" class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition">
+                            <i class="fa-solid fa-plus mr-2"></i> Add Client
+                        </button>
+                    </div>
+                    <!-- Desktop Table View -->
+                    <div class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-900/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                <!-- Rendered via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Mobile Card View -->
+                    <div id="clientsCards" class="grid grid-cols-1 gap-4 md:hidden"></div>
+                </div>
+
+                <!-- View: Projects -->
+                <div id="view-projects" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Projects</h3>
+                        <button onclick="openModal('projectModal')" class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition">
+                            <i class="fa-solid fa-plus mr-2"></i> Create Project
+                        </button>
+                    </div>
+                    <!-- Projects list will go here -->
+                    <div id="projectsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+                <!-- View: Videos -->
+                <div id="view-videos" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Video Deliverables</h3>
+                        <button onclick="openModal('videoModal')" class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition">
+                            <i class="fa-solid fa-upload mr-2"></i> Upload Video
+                        </button>
+                    </div>
+                    <div id="videosList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </div>
+
+                <!-- View: Client Videos -->
+                <div id="view-client-videos" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold font-bold text-gray-900 dark:text-white">Client Uploaded Videos</h3>
+                    </div>
+                    <div id="clientVideosList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </div>
+
+                <!-- View: Petrol -->
+                <div id="view-petrol" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Petrol Expenses</h3>
+                        <button onclick="openModal('petrolModal')" class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition">
+                            <i class="fa-solid fa-plus mr-2"></i> Log Petrol
+                        </button>
+                    </div>
+                    <!-- Desktop Table View -->
+                    <div class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-900/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client/Project</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total KM</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Odometer Photos</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="petrolTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Mobile Card View -->
+                    <div id="petrolCards" class="grid grid-cols-1 gap-4 md:hidden"></div>
+                </div>
+
+                <!-- View: Payments -->
+                <div id="view-payments" class="view-section space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Payments</h3>
+                        <button onclick="openModal('paymentModal')" class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition">
+                            <i class="fa-solid fa-plus mr-2"></i> Record Payment
+                        </button>
+                    </div>
+                    <!-- Desktop Table View -->
+                    <div class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-900/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Mobile Card View -->
+                    <div id="paymentsCards" class="grid grid-cols-1 gap-4 md:hidden"></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Background -->
+    <div id="modalOverlay" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+        <!-- Client Modal -->
+        <div id="clientModal" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[92%] sm:w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="clientModalTitle" class="text-lg font-semibold">Add Client</h3>
+                <button onclick="closeModals()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="formAddClient" class="space-y-4">
+                <div id="clientAuthFields" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="cEmail" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Temporary Password</label>
+                    <input type="password" id="cPassword" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Full Name</label>
+                    <input type="text" id="cName" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Company Name</label>
+                    <input type="text" id="cCompany" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <button type="submit" id="clientSubmitBtn" class="w-full bg-brand-600 text-white py-2 rounded-lg mt-4">Create Client Account</button>
+            </form>
+        </div>
+        
+        <!-- Project Modal -->
+        <div id="projectModal" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[92%] sm:w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="projectModalTitle" class="text-lg font-semibold">Create Project</h3>
+                <button onclick="closeModals()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="formAddProject" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Select Client</label>
+                    <select id="pClientSelect" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 bg-white dark:text-white">
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Project Name</label>
+                    <input type="text" id="pName" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Project Type</label>
+                    <input type="text" id="pType" required placeholder="e.g. Music Video, Corporate" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Description</label>
+                    <textarea id="pDesc" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Start Date</label>
+                        <input type="date" id="pStart" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Due Date</label>
+                        <input type="date" id="pDue" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Status</label>
+                    <select id="pStatus" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 bg-white dark:text-white">
+                        <option value="Pending">Pending</option>
+                        <option value="Shooting">Shooting</option>
+                        <option value="Editing">Editing</option>
+                        <option value="Review">Review</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 text-white py-2 rounded-lg mt-4">Create Project</button>
+            </form>
+        </div>
+
+        <!-- Video Modal -->
+        <div id="videoModal" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[92%] sm:w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="videoModalTitle" class="text-lg font-semibold">Upload Video</h3>
+                <button onclick="closeModals()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="formAddVideo" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Select Project</label>
+                    <select id="vProjectSelect" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 bg-white dark:text-white">
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Video Title</label>
+                    <input type="text" id="vTitle" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Description</label>
+                    <textarea id="vDesc" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"></textarea>
+                </div>
+                <div>
+                    <label id="vFileLabel" class="block text-sm font-medium mb-1">Select Video File(s)</label>
+                    <input type="file" id="vFile" multiple required accept="video/*" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-sm">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 text-white py-2 rounded-lg mt-4">Upload Video</button>
+            </form>
+        </div>
+
+        <!-- Petrol Modal -->
+        <div id="petrolModal" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[92%] sm:w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="petrolModalTitle" class="text-lg font-semibold">Log Petrol Expense</h3>
+                <button onclick="closeModals()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="formAddPetrol" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Select Client (Optional)</label>
+                    <select id="peClientSelect" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 bg-white dark:text-white">
+                        <option value="">General / None</option>
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Date</label>
+                    <input type="date" id="peDate" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Vehicle Type</label>
+                    <input type="text" id="peVehicle" required placeholder="e.g. SUV, Bike" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Starting KM</label>
+                        <input type="number" id="peStartKm" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ending KM</label>
+                        <input type="number" id="peEndKm" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Start Odometer Photo</label>
+                        <input type="file" id="peStartPhoto" accept="image/*" class="w-full px-2 py-1 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">End Odometer Photo</label>
+                        <input type="file" id="peEndPhoto" accept="image/*" class="w-full px-2 py-1 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Petrol Cost</label>
+                    <input type="number" id="peCost" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Notes</label>
+                    <textarea id="peNotes" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 text-white py-2 rounded-lg mt-4">Log Expense</button>
+            </form>
+        </div>
+
+        <!-- Payment Modal -->
+        <div id="paymentModal" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[92%] sm:w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="paymentModalTitle" class="text-lg font-semibold">Record Payment</h3>
+                <button onclick="closeModals()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="formAddPayment" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Select Client</label>
+                    <select id="payClientSelect" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 bg-white dark:text-white">
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Select Project</label>
+                    <select id="payProjectSelect" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 bg-white dark:text-white">
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Total Amount</label>
+                        <input type="number" id="payTotal" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Amount Received</label>
+                        <input type="number" id="payReceived" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Payment Date</label>
+                    <input type="date" id="payDate" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Payment Method</label>
+                    <input type="text" id="payMethod" required placeholder="e.g. Bank Transfer, UPI, Cash" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Notes</label>
+                    <textarea id="payNotes" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 text-white py-2 rounded-lg mt-4">Record Payment</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
